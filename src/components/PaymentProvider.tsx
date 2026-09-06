@@ -32,9 +32,9 @@ interface ActivePayment {
 export interface PaymentProviderProps {
   adapter: PaymentAdapter;
   children: ReactNode;
-  /** 결제창에 표시할 결제수단과 순서입니다. */
+  /** Payment methods to display in the checkout modal, in display order. */
   paymentMethods?: readonly PaymentMethod[];
-  /** 결제창이 처음 열릴 때 선택할 결제수단입니다. */
+  /** Payment method selected when the checkout modal first opens. */
   defaultPaymentMethod?: PaymentMethod;
   theme?: PaymentTheme;
 }

@@ -106,6 +106,38 @@ describe("PaymentProvider 결제 흐름", () => {
     await waitFor(() => expect(screen.getByText("cancelled")).toBeVisible());
   });
 
+  it("모달 안에서 포커스를 순환시키고 닫힌 뒤 실행 버튼으로 복원한다", async () => {
+    render(
+      <PaymentProvider adapter={createMockPaymentAdapter({ delayMs: 0 })}>
+        <Checkout />
+      </PaymentProvider>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "결제 열기" });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog", { name: "결제하기" });
+    const closeButton = screen.getByRole("button", { name: "결제창 닫기" });
+    await waitFor(() => expect(closeButton).toHaveFocus());
+
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => element.tabIndex >= 0);
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(lastElement).toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(closeButton).toHaveFocus();
+
+    fireEvent.click(closeButton);
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
   it("카드 결제는 카드사를 선택해야 진행할 수 있다", () => {
     render(
       <PaymentProvider adapter={createMockPaymentAdapter({ delayMs: 0 })}>

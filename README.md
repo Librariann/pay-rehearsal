@@ -1,57 +1,53 @@
 # Pay Rehearsal React
 
-PG사 계약과 심사를 기다리는 동안에도 주문부터 결제 완료까지의 화면과 로직을 개발할 수 있는 React/Next.js용 TypeScript 결제 UI SDK입니다.
+[한국어](./README.ko.md)
 
-> 이 패키지의 Mock 어댑터는 실제 승인, 청구, 카드정보 수집을 수행하지 않습니다. 운영 환경에서는 반드시 실제 PG 어댑터와 서버 측 결제 검증을 연결해야 합니다.
+A TypeScript payment UI SDK for React and Next.js that lets you build the complete flow from checkout to payment completion while waiting for your payment gateway contract and approval.
 
-## 제공 기능
+> The Mock adapter does not perform real authorizations, charges, or card-data collection. In production, always connect a real payment gateway adapter and verify payments on your server.
 
-- 반응형 결제 모달과 접근성 기본 지원
-- 카드, 계좌이체, 가상계좌, 휴대폰 결제 UI
-- KB국민, 신한, 삼성, 현대, 롯데, 하나, 우리, NH농협, BC 카드사 선택
-- 일시불·할부 선택과 카드사 인증 단계 시뮬레이션
-- 주요 은행 선택과 계좌이체 인증 단계 시뮬레이션
-- 가상계좌 발급 정보와 입금 대기(`pending`) 결과
-- 성공, 실패, 취소, 무작위 시나리오
-- Promise 기반 `requestPayment()` API
-- 미리 구성된 `PaymentButton`
-- 실제 PG 구현으로 교체 가능한 `PaymentAdapter` 인터페이스
-- 색상, 모서리, 글꼴 테마 설정
-- React 18/19 및 Next.js App Router 호환
+## Features
 
-## 설치
+- Responsive payment modal with baseline accessibility support
+- UI flows for cards, bank transfers, virtual accounts, and mobile payments
+- Card issuer selection for KB Kookmin, Shinhan, Samsung, Hyundai, Lotte, Hana, Woori, NH Nonghyup, and BC
+- One-time and installment payment selection with card issuer authentication simulation
+- Major bank selection with bank transfer authentication simulation
+- Virtual account details with a deposit-pending (`pending`) result
+- Success, failure, cancellation, and random test scenarios
+- Promise-based `requestPayment()` API
+- Prebuilt `PaymentButton`
+- A replaceable `PaymentAdapter` interface for real payment gateway integrations
+- Theme configuration for color, border radius, and font family
+- Compatible with React 18/19 and the Next.js App Router
 
-로컬에서 패키지를 빌드한 뒤 애플리케이션에 연결합니다.
+## Installation
+
+Install the package from npm:
+
+```bash
+npm install pay-rehearsal
+```
+
+The package injects its styles automatically when imported. You do not need to import a separate CSS file.
+
+To install a local checkout in another project, build it first and install its directory:
 
 ```bash
 npm install
 npm run build
-```
-
-다른 프로젝트에서 로컬 패키지를 설치하는 경우:
-
-```bash
 npm install /absolute/path/to/pay-rehearsal
 ```
 
-## Next.js App Router에서 사용하기
+## Using It with the Next.js App Router
 
-루트 레이아웃에서 스타일을 한 번 가져옵니다.
-
-```tsx
-// app/layout.tsx
-import "pay-rehearsal/styles.css";
-```
-
-클라이언트 Provider를 만듭니다.
+Create a client-side provider.
 
 ```tsx
 // app/payment-provider.tsx
 "use client";
 
-import {
-  MockPaymentProvider,
-} from "pay-rehearsal";
+import { MockPaymentProvider } from "pay-rehearsal";
 import type { ReactNode } from "react";
 
 export function AppPaymentProvider({ children }: { children: ReactNode }) {
@@ -69,16 +65,15 @@ export function AppPaymentProvider({ children }: { children: ReactNode }) {
 }
 ```
 
-루트 레이아웃에서 Provider를 연결합니다.
+Add the provider to your root layout.
 
 ```tsx
 // app/layout.tsx
-import "pay-rehearsal/styles.css";
 import { AppPaymentProvider } from "./payment-provider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body>
         <AppPaymentProvider>{children}</AppPaymentProvider>
       </body>
@@ -87,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-결제가 필요한 클라이언트 컴포넌트에서 호출합니다.
+Call the API from any client component that needs to initiate a payment.
 
 ```tsx
 "use client";
@@ -100,7 +95,7 @@ export function CheckoutButton() {
   const checkout = async () => {
     const result = await requestPayment({
       orderId: `ORDER-${Date.now()}`,
-      orderName: "프로 플랜 1개월",
+      orderName: "Pro Plan — 1 Month",
       amount: 29_000,
       currency: "KRW",
       customer: { email: "developer@example.com" },
@@ -111,37 +106,37 @@ export function CheckoutButton() {
     }
 
     if (result.status === "pending") {
-      // 가상계좌는 발급 시점에 결제가 완료되지 않습니다.
+      // Issuing a virtual account does not complete the payment.
       console.log(result.virtualAccount);
     }
   };
 
   return (
     <button type="button" disabled={isOpen} onClick={checkout}>
-      결제하기
+      Pay now
     </button>
   );
 }
 ```
 
-간단한 경우에는 `PaymentButton`을 사용할 수도 있습니다.
+For simpler use cases, you can use `PaymentButton`.
 
 ```tsx
 <PaymentButton
   request={{
     orderId: "ORDER-1001",
-    orderName: "프로 플랜",
+    orderName: "Pro Plan",
     amount: 29_000,
   }}
   onResult={(result) => console.log(result)}
 >
-  29,000원 결제하기
+  Pay KRW 29,000
 </PaymentButton>
 ```
 
-## 결제수단 노출과 순서 설정
+## Configuring Payment Methods and Their Order
 
-Provider의 `paymentMethods`로 결제창에 표시할 수단과 순서를 정할 수 있습니다. 생략하면 카드, 계좌이체, 가상계좌, 휴대폰을 모두 표시합니다.
+Use the provider's `paymentMethods` property to choose which methods appear in the modal and in what order. When omitted, cards, bank transfers, virtual accounts, and mobile payments are all displayed.
 
 ```tsx
 <MockPaymentProvider
@@ -152,7 +147,7 @@ Provider의 `paymentMethods`로 결제창에 표시할 수단과 순서를 정�
 </MockPaymentProvider>
 ```
 
-특정 결제에서만 목록을 바꾸려면 `requestPayment`의 두 번째 매개변수로 덮어씁니다.
+To override the list for a single payment, pass options as the second argument to `requestPayment`.
 
 ```ts
 requestPayment(order, {
@@ -160,7 +155,7 @@ requestPayment(order, {
 });
 ```
 
-결제수단을 하나로 고정하면 결제수단 선택 UI를 생략하고 해당 수단의 상세 단계부터 시작합니다.
+To lock a payment to one method, use `paymentMethod`. The method selection UI is skipped and the modal starts at that method's detail step.
 
 ```ts
 requestPayment(order, {
@@ -168,81 +163,81 @@ requestPayment(order, {
 });
 ```
 
-설정 우선순위는 요청별 `paymentMethod` → 요청별 `paymentMethods` → Provider의 `paymentMethods`이며, 배열의 순서가 화면 표시 순서가 됩니다. 실제 운영에서는 UI 노출 여부와 별개로 서버에서도 계약된 결제수단인지 검증해야 합니다.
+Configuration precedence is request-level `paymentMethod` → request-level `paymentMethods` → provider-level `paymentMethods`. Array order determines display order. In production, your server must verify that a selected payment method is enabled under your gateway contract regardless of whether the method appears in the UI.
 
-## 테스트 시나리오
+## Test Scenarios
 
-```ts
+```tsx
 <MockPaymentProvider result="success">...</MockPaymentProvider>
 <MockPaymentProvider result="failure">...</MockPaymentProvider>
 <MockPaymentProvider result="cancelled">...</MockPaymentProvider>
 <MockPaymentProvider result="random" randomSuccessRate={0.7}>...</MockPaymentProvider>
 ```
 
-실패 코드와 지연 시간도 지정할 수 있습니다.
+You can also configure the failure code, failure message, and simulated delay.
 
 ```ts
 createMockPaymentAdapter({
   result: "failure",
   delayMs: 1_500,
   failureCode: "CARD_DECLINED",
-  failureMessage: "카드 승인이 거절되었습니다.",
+  failureMessage: "The card authorization was declined.",
 });
 ```
 
-가상계좌의 예금주와 입금기한도 설정할 수 있습니다.
+The account holder and deposit deadline for virtual accounts are configurable as well.
 
 ```tsx
 <MockPaymentProvider
   result="success"
-  virtualAccountHolder="테스트상점"
+  virtualAccountHolder="Test Merchant"
   virtualAccountDueHours={24}
 >
   {children}
 </MockPaymentProvider>
 ```
 
-한 번의 결제만 다른 결과로 테스트하려면 `requestPayment`의 두 번째 매개변수를 사용합니다. 이 값이 Provider의 기본 `result`보다 우선합니다.
+To test a different outcome for a single payment, pass options as the second argument to `requestPayment`. This value takes precedence over the provider's default `result`.
 
 ```ts
 const result = await requestPayment(
   {
     orderId: "ORDER-FAILURE-TEST",
-    orderName: "실패 화면 테스트",
+    orderName: "Failure Screen Test",
     amount: 29_000,
   },
   { mockResult: "failure" },
 );
 ```
 
-## 결제수단별 테스트 흐름
+## Test Flow by Payment Method
 
-- 신용·체크카드: 카드사 선택 → 일시불·할부 선택 → 카드사 인증 → 승인 확인 → `success`
-- 계좌이체: 출금 은행 선택 → 은행 앱·뱅크페이 인증 화면 → 이체 결과 확인 → `success`
-- 가상계좌: 입금 은행 선택 → 계좌 발급 → 계좌번호와 입금기한 안내 → `pending`
-- 휴대폰: 테스트 승인 → `success`
+- Credit or debit card: select issuer → select one-time or installment payment → simulate issuer authentication → confirm authorization → `success`
+- Bank transfer: select withdrawal bank → simulate bank app or BankPay authentication → confirm transfer → `success`
+- Virtual account: select deposit bank → issue account → display account number and deposit deadline → `pending`
+- Mobile payment: simulate authorization → `success`
 
-실제 가상계좌 결제는 계좌 발급만으로 완료되지 않습니다. 입금 이후 PG사의 웹훅을 서버가 검증한 시점에 주문을 결제 완료로 변경해야 합니다. `pay-rehearsal`은 이 차이를 재현하기 위해 가상계좌 발급 결과를 `pending`으로 반환합니다.
+A real virtual account payment is not complete when the account is issued. The order should be marked as paid only after your server verifies the payment gateway's webhook following the deposit. `pay-rehearsal` reproduces this distinction by returning `pending` when a virtual account is issued.
 
-## 실제 PG로 교체하기
+## Replacing the Mock Adapter with a Real Payment Gateway
 
-UI와 사용하는 쪽의 코드는 유지하고 `PaymentAdapter` 구현만 교체합니다.
+Keep the UI and consumer code unchanged and replace only the `PaymentAdapter` implementation.
 
 ```ts
 import type { PaymentAdapter } from "pay-rehearsal";
 
 export const realPgAdapter: PaymentAdapter = {
-  name: "My PG",
+  name: "My Payment Gateway",
   testMode: false,
 
   async pay(
     { request, method, cardIssuer, installmentMonths, bank },
     signal,
   ) {
-    // 1. PG SDK 결제창 호출
-    // 2. 사용자 서비스 서버에 paymentKey/orderId/amount 전달
-    // 3. 서버가 PG 승인 API 호출 및 금액 검증
-    // 4. 서버에서 검증된 결과만 반환
+    // 1. Open the payment gateway SDK checkout UI.
+    // 2. Send paymentKey, orderId, and amount to your application server.
+    // 3. Have the server call the gateway's confirmation API and verify the amount.
+    // 4. Return only the server-verified result.
     const response = await fetch("/api/payments/confirm", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -267,7 +262,7 @@ export const realPgAdapter: PaymentAdapter = {
         bank,
         testMode: false,
         code: "PG_CONFIRM_FAILED",
-        message: "결제 승인에 실패했습니다.",
+        message: "Payment authorization failed.",
         retryable: false,
       };
     }
@@ -289,15 +284,15 @@ export const realPgAdapter: PaymentAdapter = {
 };
 ```
 
-운영 전환 시에는 다음 원칙을 지켜야 합니다.
+Follow these rules before switching to production:
 
-- 카드번호, 비밀번호, 주민번호를 이 UI에서 직접 수집하거나 저장하지 않습니다.
-- 주문 금액과 승인 상태는 브라우저 결과가 아니라 서비스 서버에서 검증합니다.
-- `orderId`는 서버가 생성한 유일한 값을 사용합니다.
-- 중복 승인 방지를 위해 서버 승인 API에 멱등성을 적용합니다.
-- 운영 빌드에서 Mock 어댑터가 연결되지 않았는지 확인합니다.
+- Never collect or store card numbers, passwords, or government-issued identification numbers in this UI.
+- Verify the order amount and authorization status on your application server, not from browser results.
+- Use a unique, server-generated `orderId`.
+- Apply idempotency to your server-side authorization endpoint to prevent duplicate charges.
+- Confirm that the Mock adapter is not connected in production builds.
 
-## 명령어
+## Commands
 
 ```bash
 npm run typecheck
@@ -305,4 +300,8 @@ npm test
 npm run build
 ```
 
-동작하는 Next.js 예제는 `examples/nextjs`에 있습니다.
+A working Next.js example is available in `examples/nextjs`.
+
+## Disclaimer
+
+Pay Rehearsal is not provided, sponsored, or endorsed by any payment gateway, card issuer, or financial institution. Financial institution names are used only to describe simulated payment flows.

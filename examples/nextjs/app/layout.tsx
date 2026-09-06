@@ -1,4 +1,3 @@
-import "pay-rehearsal/styles.css";
 import "./styles.css";
 
 import type { Metadata } from "next";

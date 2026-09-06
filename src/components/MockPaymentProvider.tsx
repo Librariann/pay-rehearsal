@@ -16,14 +16,14 @@ import { PaymentProvider } from "./PaymentProvider";
 export interface MockPaymentProviderProps
   extends Omit<MockPaymentAdapterOptions, "result" | "scenario"> {
   children: ReactNode;
-  /** 이 Provider 아래 결제에 적용할 기본 테스트 결과입니다. */
+  /** Default test outcome for payments initiated under this provider. */
   result?: MockPaymentScenario;
   paymentMethods?: readonly PaymentMethod[];
   defaultPaymentMethod?: PaymentMethod;
   theme?: PaymentTheme;
 }
 
-/** Mock 결제를 간단히 연결하기 위한 React Provider입니다. */
+/** React provider for quickly integrating Mock payments. */
 export function MockPaymentProvider({
   children,
   result = "success",

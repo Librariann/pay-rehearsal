@@ -35,6 +35,15 @@ interface PaymentModalProps {
 
 type ViewState = "selecting" | "authorizing" | "processing" | "result";
 
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
 const METHODS: Array<{
   id: PaymentMethod;
   label: string;
@@ -134,7 +143,9 @@ export function PaymentModal({
   onComplete,
 }: PaymentModalProps) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const methodRef = useRef<PaymentMethod>(initialPaymentMethod);
   const cardIssuerRef = useRef<CardIssuer | null>(null);
@@ -195,17 +206,68 @@ export function PaymentModal({
   }, [adapter.testMode, onComplete, request.amount, request.orderId]);
 
   useEffect(() => {
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     setMounted(true);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    return () => {
+      abortControllerRef.current?.abort();
+      document.body.style.overflow = previousOverflow;
+
+      const previouslyFocusedElement = previouslyFocusedElementRef.current;
+      if (previouslyFocusedElement?.isConnected) {
+        previouslyFocusedElement.focus();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
+      if (event.key === "Escape") {
+        close();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((element) => element.tabIndex >= 0);
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (
+        event.shiftKey &&
+        (activeElement === firstElement || !dialog.contains(activeElement))
+      ) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (
+        !event.shiftKey &&
+        (activeElement === lastElement || !dialog.contains(activeElement))
+      ) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      abortControllerRef.current?.abort();
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [close]);
@@ -304,10 +366,12 @@ export function PaymentModal({
         onMouseDown={view === "processing" ? undefined : close}
       />
       <section
+        ref={dialogRef}
         className="pay-rehearsal-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
       >
         <header className="pay-rehearsal-header">
           <div>

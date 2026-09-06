@@ -34,11 +34,11 @@ export type MockPaymentScenario =
   | "random";
 
 export interface PaymentRequestOptions {
-  /** Mock 어댑터를 사용할 때 이번 결제의 결과만 덮어씁니다. */
+  /** Overrides the outcome of this payment when using the Mock adapter. */
   mockResult?: MockPaymentScenario;
-  /** 이번 결제창에 표시할 결제수단과 순서입니다. */
+  /** Payment methods to display for this payment, in display order. */
   paymentMethods?: readonly PaymentMethod[];
-  /** 특정 결제수단으로 고정하고 결제수단 선택 UI를 생략합니다. */
+  /** Locks this payment to one method and skips the method selection UI. */
   paymentMethod?: PaymentMethod;
 }
 
@@ -62,7 +62,7 @@ export interface PaymentAttempt {
   request: PaymentRequest;
   method: PaymentMethod;
   cardIssuer?: CardIssuer;
-  /** 0은 일시불, 2 이상은 할부 개월 수입니다. */
+  /** 0 means a one-time payment; values of 2 or more are installment months. */
   installmentMonths?: number;
   bank?: BankCode;
   options?: PaymentRequestOptions;
@@ -75,7 +75,7 @@ interface PaymentResultBase {
   cardIssuer?: CardIssuer;
   installmentMonths?: number;
   bank?: BankCode;
-  /** Mock 결과와 실제 PG 결과를 애플리케이션에서 구별하기 위한 값입니다. */
+  /** Distinguishes Mock results from real payment gateway results. */
   testMode: boolean;
 }
 

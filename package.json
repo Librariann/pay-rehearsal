@@ -1,15 +1,18 @@
 {
   "name": "pay-rehearsal",
   "version": "0.1.0",
-  "description": "PG 승인 전에도 결제 흐름을 개발할 수 있는 React/Next.js용 Mock 결제 UI SDK",
+  "description": "A mock payment UI SDK for building React and Next.js checkout flows before payment gateway approval",
   "license": "MIT",
   "type": "module",
   "sideEffects": [
+    "./dist/index.js",
     "**/*.css"
   ],
   "files": [
     "dist",
-    "README.md"
+    "src/styles.css",
+    "README.md",
+    "README.ko.md"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -19,14 +22,15 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/index.css"
+    "./styles.css": "./src/styles.css"
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "peerDependencies": {
     "react": ">=18.2.0",

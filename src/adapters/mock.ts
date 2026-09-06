@@ -8,9 +8,9 @@ import type {
 } from "../types";
 
 export interface MockPaymentAdapterOptions {
-  /** @deprecated `result`를 사용하세요. */
+  /** @deprecated Use `result` instead. */
   scenario?: MockPaymentScenario;
-  /** 별도 지정이 없는 결제에 적용할 기본 Mock 결과입니다. */
+  /** Default Mock outcome for payments without a request-level override. */
   result?: MockPaymentScenario;
   delayMs?: number;
   failureCode?: string;
@@ -48,7 +48,7 @@ function createId(): string {
   return `mock_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-/** 개발과 테스트에서만 사용하는 결정 가능한 결제 어댑터입니다. */
+/** A controllable payment adapter intended for development and testing only. */
 export function createMockPaymentAdapter(
   options: MockPaymentAdapterOptions = {},
 ): PaymentAdapter {

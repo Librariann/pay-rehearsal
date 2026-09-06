@@ -4,7 +4,8 @@ export type PaymentMethod =
   | "card"
   | "bank-transfer"
   | "virtual-account"
-  | "mobile";
+  | "mobile"
+  | "paypal";
 
 export type CardIssuer =
   | "kb-kookmin"

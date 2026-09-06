@@ -33,7 +33,14 @@ interface PaymentModalProps {
   onComplete(result: PaymentResult): void;
 }
 
-type ViewState = "selecting" | "authorizing" | "processing" | "result";
+type ViewState =
+  | "selecting"
+  | "paypal-creating"
+  | "authorizing"
+  | "processing"
+  | "result";
+
+type PayPalStep = "create" | "approve" | "capture";
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -54,6 +61,7 @@ const METHODS: Array<{
   { id: "bank-transfer", label: "계좌이체", description: "인증 후 즉시 출금", icon: "↔" },
   { id: "virtual-account", label: "가상계좌", description: "계좌 발급 후 입금", icon: "▤" },
   { id: "mobile", label: "휴대폰", description: "통신사 결제", icon: "▯" },
+  { id: "paypal", label: "PayPal", description: "해외 간편결제", icon: "P" },
 ];
 
 const CARD_ISSUERS: Array<{
@@ -132,6 +140,43 @@ function getResultMessage(result: PaymentResult) {
   }
 }
 
+function PayPalProgress({
+  currentStep,
+}: {
+  currentStep: PayPalStep;
+}) {
+  const steps: Array<{ id: PayPalStep; label: string }> = [
+    { id: "create", label: "주문 생성" },
+    { id: "approve", label: "사용자 승인" },
+    { id: "capture", label: "결제 캡처" },
+  ];
+  const currentIndex = steps.findIndex((step) => step.id === currentStep);
+
+  return (
+    <ol className="pay-rehearsal-paypal-progress" aria-label="PayPal 결제 진행 단계">
+      {steps.map((step, index) => {
+        const state =
+          index < currentIndex
+            ? "completed"
+            : index === currentIndex
+              ? "current"
+              : "upcoming";
+
+        return (
+          <li
+            key={step.id}
+            data-state={state}
+            aria-current={state === "current" ? "step" : undefined}
+          >
+            <span aria-hidden="true">{index < currentIndex ? "✓" : index + 1}</span>
+            {step.label}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export function PaymentModal({
   adapter,
   request,
@@ -147,6 +192,7 @@ export function PaymentModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const paypalOrderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const methodRef = useRef<PaymentMethod>(initialPaymentMethod);
   const cardIssuerRef = useRef<CardIssuer | null>(null);
   const installmentMonthsRef = useRef(0);
@@ -160,9 +206,11 @@ export function PaymentModal({
   const [bank, setBank] = useState<BankCode | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [result, setResult] = useState<PaymentResult | null>(null);
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
 
   const style = {
-    "--pay-rehearsal-accent": theme?.accentColor,
+    "--pay-rehearsal-accent":
+      method === "paypal" ? "#003087" : theme?.accentColor,
     "--pay-rehearsal-radius": theme?.borderRadius
       ? `${theme.borderRadius}px`
       : undefined,
@@ -176,6 +224,9 @@ export function PaymentModal({
   resultRef.current = result;
 
   const close = useCallback(() => {
+    if (paypalOrderTimerRef.current) {
+      globalThis.clearTimeout(paypalOrderTimerRef.current);
+    }
     abortControllerRef.current?.abort();
     if (resultRef.current) {
       onComplete(resultRef.current);
@@ -215,6 +266,9 @@ export function PaymentModal({
     document.body.style.overflow = "hidden";
 
     return () => {
+      if (paypalOrderTimerRef.current) {
+        globalThis.clearTimeout(paypalOrderTimerRef.current);
+      }
       abortControllerRef.current?.abort();
       document.body.style.overflow = previousOverflow;
 
@@ -343,6 +397,16 @@ export function PaymentModal({
   const proceed = () => {
     if (!agreed || !isSelectionComplete) return;
 
+    if (method === "paypal") {
+      setView("paypal-creating");
+      paypalOrderTimerRef.current = globalThis.setTimeout(() => {
+        setPaypalOrderId(`PAYPAL-MOCK-${Date.now().toString(36).toUpperCase()}`);
+        setView("authorizing");
+        paypalOrderTimerRef.current = null;
+      }, 650);
+      return;
+    }
+
     if (method === "card" || method === "bank-transfer") {
       setView("authorizing");
       return;
@@ -353,13 +417,23 @@ export function PaymentModal({
 
   const retry = () => {
     setResult(null);
+    setPaypalOrderId(null);
+    setView("selecting");
+  };
+
+  const returnToSelection = () => {
+    setPaypalOrderId(null);
     setView("selecting");
   };
 
   if (!mounted) return null;
 
   return createPortal(
-    <div className="pay-rehearsal-root" style={style}>
+    <div
+      className="pay-rehearsal-root"
+      data-payment-method={method}
+      style={style}
+    >
       <div
         className="pay-rehearsal-backdrop"
         aria-hidden="true"
@@ -375,7 +449,9 @@ export function PaymentModal({
       >
         <header className="pay-rehearsal-header">
           <div>
-            <span className="pay-rehearsal-eyebrow">PAY REHEARSAL</span>
+            <span className="pay-rehearsal-eyebrow">
+              {method === "paypal" ? "PAYPAL REHEARSAL" : "PAY REHEARSAL"}
+            </span>
             <h2 id={titleId}>결제하기</h2>
           </div>
           <button
@@ -543,22 +619,44 @@ export function PaymentModal({
             >
               {method === "virtual-account"
                 ? "가상계좌 발급"
-                : `${formatAmount(request.amount, request.currency)} ${
-                    method === "bank-transfer" ? "계좌이체" : "테스트 결제"
-                  }`}
+                : method === "paypal"
+                  ? "PayPal로 결제"
+                  : `${formatAmount(request.amount, request.currency)} ${
+                      method === "bank-transfer" ? "계좌이체" : "테스트 결제"
+                    }`}
             </button>
+          </div>
+        )}
+
+        {view === "paypal-creating" && (
+          <div className="pay-rehearsal-state pay-rehearsal-paypal-auth" aria-live="polite">
+            <PayPalProgress currentStep="create" />
+            <span className="pay-rehearsal-spinner" aria-hidden="true" />
+            <h3>PayPal 주문을 생성하고 있어요</h3>
+            <p>
+              실제 연동에서는 서비스 서버가 금액과 통화를 검증한 뒤 PayPal
+              주문 ID를 생성합니다.
+            </p>
           </div>
         )}
 
         {view === "authorizing" &&
           ((method === "bank-transfer" && bank) ||
-            (method === "card" && cardIssuer)) && (
-          <div className="pay-rehearsal-state pay-rehearsal-auth-state">
+            (method === "card" && cardIssuer) ||
+            method === "paypal") && (
+          <div
+            className={`pay-rehearsal-state pay-rehearsal-auth-state${
+              method === "paypal" ? " pay-rehearsal-paypal-auth" : ""
+            }`}
+          >
+            {method === "paypal" && <PayPalProgress currentStep="approve" />}
             <span className="pay-rehearsal-auth-mark" aria-hidden="true">
-              {method === "card" ? "✓" : "↗"}
+              {method === "card" ? "✓" : method === "paypal" ? "P" : "↗"}
             </span>
             <span className="pay-rehearsal-selected-bank">
-              {method === "card" && cardIssuer
+              {method === "paypal"
+                ? "PayPal"
+                : method === "card" && cardIssuer
                 ? `${getCardIssuerLabel(cardIssuer)} · ${
                     installmentMonths === 0
                       ? "일시불"
@@ -569,33 +667,50 @@ export function PaymentModal({
                   : null}
             </span>
             <h3>
-              {method === "card"
+              {method === "paypal"
+                ? "PayPal에서 결제를 승인해 주세요"
+                : method === "card"
                 ? "카드사 인증을 완료해 주세요"
                 : "이체 인증을 완료해 주세요"}
             </h3>
             <p>
-              {method === "card"
+              {method === "paypal"
+                ? "실제 결제에서는 PayPal 팝업 또는 이동된 페이지에서 로그인하고 결제를 승인합니다."
+                : method === "card"
                 ? "실제 결제에서는 카드사 앱 또는 카드사 인증창에서 본인 인증과 결제 동의를 진행합니다."
                 : "실제 결제에서는 은행 앱 또는 뱅크페이에서 본인 인증과 출금 동의를 진행합니다."}
             </p>
+            {method === "paypal" && paypalOrderId && (
+              <code className="pay-rehearsal-paypal-order-id">
+                Order ID · {paypalOrderId}
+              </code>
+            )}
             <div className="pay-rehearsal-transfer-summary">
-              <span>{method === "card" ? "결제 금액" : "이체 금액"}</span>
+              <span>
+                {method === "bank-transfer" ? "이체 금액" : "결제 금액"}
+              </span>
               <strong>{formatAmount(request.amount, request.currency)}</strong>
             </div>
             <div className="pay-rehearsal-result-actions">
               <button
                 type="button"
                 className="pay-rehearsal-secondary"
-                onClick={() => setView("selecting")}
+                onClick={returnToSelection}
               >
-                {method === "card" ? "카드 다시 선택" : "은행 다시 선택"}
+                {method === "card"
+                  ? "카드 다시 선택"
+                  : method === "bank-transfer"
+                    ? "은행 다시 선택"
+                    : "결제수단 다시 선택"}
               </button>
               <button
                 type="button"
                 className="pay-rehearsal-primary"
                 onClick={() => void pay()}
               >
-                {method === "card"
+                {method === "paypal"
+                  ? "테스트 PayPal 승인 완료"
+                  : method === "card"
                   ? "테스트 카드 인증 완료"
                   : "테스트 인증 완료"}
               </button>
@@ -605,15 +720,22 @@ export function PaymentModal({
 
         {view === "processing" && (
           <div className="pay-rehearsal-state" aria-live="polite">
+            {method === "paypal" && <PayPalProgress currentStep="capture" />}
             <span className="pay-rehearsal-spinner" aria-hidden="true" />
             <h3>
               {method === "virtual-account"
                 ? "가상계좌를 발급하고 있어요"
                 : method === "bank-transfer"
                   ? "이체 결과를 확인하고 있어요"
+                  : method === "paypal"
+                    ? "PayPal 결제를 캡처하고 있어요"
                   : "결제를 처리하고 있어요"}
             </h3>
-            <p>잠시만 기다려 주세요. 창을 닫지 마세요.</p>
+            <p>
+              {method === "paypal"
+                ? "실제 연동에서는 서비스 서버가 승인된 주문을 캡처하고 완료 상태를 검증합니다."
+                : "잠시만 기다려 주세요. 창을 닫지 마세요."}
+            </p>
           </div>
         )}
 
@@ -653,6 +775,11 @@ export function PaymentModal({
             )}
             {result.status === "success" && (
               <code className="pay-rehearsal-payment-id">{result.paymentId}</code>
+            )}
+            {method === "paypal" && paypalOrderId && (
+              <code className="pay-rehearsal-paypal-order-id">
+                Order ID · {paypalOrderId}
+              </code>
             )}
             <div className="pay-rehearsal-result-actions">
               {result.status === "failed" && result.retryable && (

@@ -46,6 +46,7 @@ const ALL_PAYMENT_METHODS: readonly PaymentMethod[] = [
   "bank-transfer",
   "virtual-account",
   "mobile",
+  "paypal",
 ];
 
 const PAYMENT_METHOD_SET = new Set<PaymentMethod>(ALL_PAYMENT_METHODS);

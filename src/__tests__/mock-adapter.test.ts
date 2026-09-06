@@ -107,4 +107,18 @@ describe("createMockPaymentAdapter", () => {
       },
     });
   });
+
+  it("PayPal 결제수단을 성공 결과에 포함한다", async () => {
+    const adapter = createMockPaymentAdapter({ result: "success", delayMs: 0 });
+    const result = await adapter.pay(
+      { ...attempt, method: "paypal" },
+      new AbortController().signal,
+    );
+
+    expect(result).toMatchObject({
+      status: "success",
+      method: "paypal",
+      testMode: true,
+    });
+  });
 });

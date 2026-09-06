@@ -213,6 +213,44 @@ describe("PaymentProvider 결제 흐름", () => {
     await waitFor(() => expect(screen.getByText("pending")).toBeVisible());
   });
 
+  it("PayPal 사용자 승인을 거쳐 성공 결과를 반환한다", async () => {
+    render(
+      <PaymentProvider
+        adapter={createMockPaymentAdapter({ delayMs: 0, result: "success" })}
+      >
+        <Checkout />
+      </PaymentProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "결제 열기" }));
+    fireEvent.click(screen.getByText("PayPal"));
+    expect(
+      screen.getByRole("dialog", { name: "결제하기" }).parentElement,
+    ).toHaveAttribute("data-payment-method", "paypal");
+    expect(screen.getByText("PAYPAL REHEARSAL")).toBeVisible();
+    fireEvent.click(
+      screen.getByLabelText("주문 내용과 테스트 결제 조건을 확인했습니다."),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "PayPal로 결제" }));
+
+    expect(screen.getByText("PayPal 주문을 생성하고 있어요")).toBeVisible();
+    expect(screen.getByRole("list", { name: "PayPal 결제 진행 단계" })).toBeVisible();
+    expect(
+      await screen.findByText("PayPal에서 결제를 승인해 주세요"),
+    ).toBeVisible();
+    expect(screen.getByText(/^Order ID · PAYPAL-MOCK-/)).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "테스트 PayPal 승인 완료" }),
+    );
+
+    expect(screen.getByText("PayPal 결제를 캡처하고 있어요")).toBeVisible();
+    expect(
+      await screen.findByText("테스트 결제가 완료됐어요"),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    await waitFor(() => expect(screen.getByText("success")).toBeVisible());
+  });
+
   it("Provider 설정대로 결제수단 순서와 기본 선택을 적용한다", () => {
     render(
       <PaymentProvider

@@ -111,6 +111,28 @@
   letter-spacing: 0.08em;
 }
 
+.pay-rehearsal-root[data-payment-method="paypal"] .pay-rehearsal-backdrop {
+  background: rgba(0, 31, 78, 0.62);
+}
+
+.pay-rehearsal-root[data-payment-method="paypal"] .pay-rehearsal-dialog {
+  border-color: #d9e7f7;
+  box-shadow: 0 24px 80px rgba(0, 48, 135, 0.28);
+}
+
+.pay-rehearsal-root[data-payment-method="paypal"]
+  .pay-rehearsal-test-banner {
+  border-color: #c9dcf3;
+  background: #f1f7ff;
+  color: #003087;
+}
+
+.pay-rehearsal-root[data-payment-method="paypal"]
+  .pay-rehearsal-test-banner
+  span {
+  background: #0070ba;
+}
+
 .pay-rehearsal-content {
   padding: 20px 24px 24px;
 }
@@ -471,6 +493,19 @@
   filter: brightness(0.92);
 }
 
+.pay-rehearsal-root[data-payment-method="paypal"]
+  .pay-rehearsal-primary:not(:disabled) {
+  background: #ffc439;
+  color: #111820;
+  box-shadow: 0 8px 22px rgba(255, 196, 57, 0.32);
+}
+
+.pay-rehearsal-root[data-payment-method="paypal"]
+  .pay-rehearsal-primary:hover:not(:disabled) {
+  background: #f2ba36;
+  filter: none;
+}
+
 .pay-rehearsal-primary:disabled {
   background: #d9d9df;
   box-shadow: none;
@@ -532,6 +567,103 @@
 
 .pay-rehearsal-auth-state h3 {
   margin-top: 12px;
+}
+
+.pay-rehearsal-paypal-auth {
+  background: linear-gradient(180deg, #f4f8fd 0, #fff 55%);
+}
+
+.pay-rehearsal-paypal-auth .pay-rehearsal-auth-mark {
+  border: 1px solid #c9dcf3;
+  border-radius: 50%;
+  background: #fff;
+  color: #0070ba;
+  box-shadow: 0 10px 28px rgba(0, 48, 135, 0.14);
+  font-family: Arial, sans-serif;
+  font-style: italic;
+}
+
+.pay-rehearsal-paypal-auth .pay-rehearsal-selected-bank {
+  background: #e8f2fc;
+  color: #003087;
+}
+
+.pay-rehearsal-paypal-auth .pay-rehearsal-transfer-summary {
+  border: 1px solid #dce9f7;
+  background: #f7fbff;
+}
+
+.pay-rehearsal-paypal-progress {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.pay-rehearsal-paypal-progress li {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  color: #8a96a8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-paypal-progress li:not(:last-child)::after {
+  position: absolute;
+  top: 13px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: #d7e2ef;
+  content: "";
+}
+
+.pay-rehearsal-paypal-progress li[data-state="completed"]::after {
+  background: #0070ba;
+}
+
+.pay-rehearsal-paypal-progress li > span {
+  z-index: 1;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid #d7e2ef;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 10px;
+}
+
+.pay-rehearsal-paypal-progress li[data-state="completed"],
+.pay-rehearsal-paypal-progress li[data-state="current"] {
+  color: #003087;
+}
+
+.pay-rehearsal-paypal-progress li[data-state="completed"] > span {
+  border-color: #0070ba;
+  background: #0070ba;
+  color: #fff;
+}
+
+.pay-rehearsal-paypal-progress li[data-state="current"] > span {
+  border-color: #ffc439;
+  box-shadow: 0 0 0 4px rgba(255, 196, 57, 0.2);
+  color: #003087;
+}
+
+.pay-rehearsal-paypal-order-id {
+  margin-top: 16px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #edf5fd;
+  color: #49627f;
+  font-size: 10px;
 }
 
 .pay-rehearsal-transfer-summary {

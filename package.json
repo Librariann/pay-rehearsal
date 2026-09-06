@@ -1,6 +1,6 @@
 {
   "name": "pay-rehearsal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A mock payment UI SDK for building React and Next.js checkout flows before payment gateway approval",
   "license": "MIT",
   "type": "module",

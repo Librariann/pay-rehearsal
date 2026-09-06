@@ -1,0 +1,702 @@
+.pay-rehearsal-root {
+  --pay-rehearsal-accent: #4f46e5;
+  --pay-rehearsal-accent-dark: #4338ca;
+  --pay-rehearsal-radius: 24px;
+  --pay-rehearsal-font: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  font-family: var(--pay-rehearsal-font);
+  color: #17171c;
+  box-sizing: border-box;
+}
+
+.pay-rehearsal-root *,
+.pay-rehearsal-root *::before,
+.pay-rehearsal-root *::after {
+  box-sizing: border-box;
+}
+
+.pay-rehearsal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 15, 22, 0.58);
+  backdrop-filter: blur(5px);
+  animation: pay-rehearsal-fade-in 160ms ease-out;
+}
+
+.pay-rehearsal-dialog {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: min(760px, calc(100dvh - 40px));
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--pay-rehearsal-radius);
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(12, 12, 20, 0.28);
+  animation: pay-rehearsal-rise-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pay-rehearsal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 18px;
+}
+
+.pay-rehearsal-header h2 {
+  margin: 3px 0 0;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.04em;
+}
+
+.pay-rehearsal-eyebrow {
+  color: var(--pay-rehearsal-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.pay-rehearsal-close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f4f4f6;
+  color: #555560;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pay-rehearsal-close:hover:not(:disabled) {
+  background: #e9e9ed;
+  color: #17171c;
+}
+
+.pay-rehearsal-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pay-rehearsal-test-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 24px;
+  padding: 10px 12px;
+  border: 1px solid #dddafe;
+  border-radius: 12px;
+  background: #f5f4ff;
+  color: #4b4780;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pay-rehearsal-test-banner span {
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--pay-rehearsal-accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.pay-rehearsal-content {
+  padding: 20px 24px 24px;
+}
+
+.pay-rehearsal-order {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f7f7f9;
+}
+
+.pay-rehearsal-order > div {
+  min-width: 0;
+}
+
+.pay-rehearsal-order span,
+.pay-rehearsal-order small {
+  display: block;
+  color: #7a7a86;
+  font-size: 12px;
+}
+
+.pay-rehearsal-order strong:not(.pay-rehearsal-amount) {
+  display: block;
+  overflow: hidden;
+  margin: 5px 0 6px;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-rehearsal-amount {
+  flex: none;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.pay-rehearsal-methods {
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.pay-rehearsal-methods legend {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-issuers {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.pay-rehearsal-issuers legend {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-issuer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pay-rehearsal-issuer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #e6e6eb;
+  border-radius: 11px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+.pay-rehearsal-issuer:hover {
+  border-color: #c7c5d3;
+}
+
+.pay-rehearsal-issuer[data-selected="true"] {
+  border-color: var(--pay-rehearsal-accent);
+  background: #f8f7ff;
+  box-shadow: 0 0 0 1px var(--pay-rehearsal-accent);
+}
+
+.pay-rehearsal-issuer input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.pay-rehearsal-issuer:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--pay-rehearsal-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.pay-rehearsal-issuer > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  border-radius: 8px;
+  background: #f0eff5;
+  color: #62616c;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.pay-rehearsal-issuer[data-selected="true"] > span {
+  background: var(--pay-rehearsal-accent);
+  color: #fff;
+}
+
+.pay-rehearsal-issuer strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-rehearsal-installment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 13px 14px;
+  border: 1px solid #e6e6eb;
+  border-radius: 12px;
+  color: #3f3f48;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-installment select {
+  min-width: 120px;
+  padding: 8px 32px 8px 10px;
+  border: 1px solid #d8d8df;
+  border-radius: 9px;
+  background: #fff;
+  color: #24242a;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pay-rehearsal-installment select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pay-rehearsal-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.pay-rehearsal-banks {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.pay-rehearsal-banks legend {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pay-rehearsal-bank {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #e6e6eb;
+  border-radius: 11px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.pay-rehearsal-bank:hover {
+  border-color: #c7c5d3;
+}
+
+.pay-rehearsal-bank[data-selected="true"] {
+  border-color: var(--pay-rehearsal-accent);
+  background: #f8f7ff;
+  box-shadow: 0 0 0 1px var(--pay-rehearsal-accent);
+}
+
+.pay-rehearsal-bank input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.pay-rehearsal-bank:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--pay-rehearsal-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.pay-rehearsal-bank > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border-radius: 9px;
+  background: #f0eff5;
+  color: #62616c;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.pay-rehearsal-bank[data-selected="true"] > span {
+  background: var(--pay-rehearsal-accent);
+  color: #fff;
+}
+
+.pay-rehearsal-bank strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-rehearsal-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pay-rehearsal-method {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid #e6e6eb;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+.pay-rehearsal-method:hover {
+  border-color: #c7c5d3;
+}
+
+.pay-rehearsal-method[data-selected="true"] {
+  border-color: var(--pay-rehearsal-accent);
+  background: #f8f7ff;
+  box-shadow: 0 0 0 1px var(--pay-rehearsal-accent);
+}
+
+.pay-rehearsal-method input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.pay-rehearsal-method:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--pay-rehearsal-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.pay-rehearsal-method-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: #ededf2;
+  color: #5c5c67;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.pay-rehearsal-method[data-selected="true"] .pay-rehearsal-method-icon {
+  background: var(--pay-rehearsal-accent);
+  color: #fff;
+}
+
+.pay-rehearsal-method strong,
+.pay-rehearsal-method small {
+  display: block;
+}
+
+.pay-rehearsal-method strong {
+  font-size: 13px;
+}
+
+.pay-rehearsal-method small {
+  margin-top: 3px;
+  color: #858590;
+  font-size: 11px;
+}
+
+.pay-rehearsal-agreement {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 2px 14px;
+  color: #555560;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pay-rehearsal-agreement input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--pay-rehearsal-accent);
+}
+
+.pay-rehearsal-primary,
+.pay-rehearsal-secondary {
+  min-height: 50px;
+  padding: 0 20px;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.pay-rehearsal-primary {
+  width: 100%;
+  border: 0;
+  background: var(--pay-rehearsal-accent);
+  color: #fff;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--pay-rehearsal-accent) 28%, transparent);
+}
+
+.pay-rehearsal-primary:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.pay-rehearsal-primary:disabled {
+  background: #d9d9df;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.pay-rehearsal-secondary {
+  width: 100%;
+  border: 1px solid #ddddE3;
+  background: #fff;
+  color: #33333b;
+}
+
+.pay-rehearsal-state {
+  display: flex;
+  min-height: 360px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 28px;
+  text-align: center;
+}
+
+.pay-rehearsal-state h3 {
+  margin: 22px 0 8px;
+  font-size: 20px;
+  letter-spacing: -0.035em;
+}
+
+.pay-rehearsal-state p {
+  max-width: 310px;
+  margin: 0;
+  color: #73737e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pay-rehearsal-auth-mark {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 18px;
+  background: #efedff;
+  color: var(--pay-rehearsal-accent);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.pay-rehearsal-selected-bank {
+  margin-top: 18px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f4f4f7;
+  color: #5f5f69;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.pay-rehearsal-auth-state h3 {
+  margin-top: 12px;
+}
+
+.pay-rehearsal-transfer-summary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 13px;
+  background: #f7f7f9;
+  font-size: 13px;
+}
+
+.pay-rehearsal-transfer-summary span {
+  color: #767681;
+}
+
+.pay-rehearsal-transfer-summary strong {
+  font-size: 16px;
+}
+
+.pay-rehearsal-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e9e8fc;
+  border-top-color: var(--pay-rehearsal-accent);
+  border-radius: 50%;
+  animation: pay-rehearsal-spin 700ms linear infinite;
+}
+
+.pay-rehearsal-result-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.pay-rehearsal-result-success {
+  background: #eaf9f0;
+  color: #139455;
+}
+
+.pay-rehearsal-result-failed,
+.pay-rehearsal-result-cancelled {
+  background: #fff0f0;
+  color: #d64747;
+}
+
+.pay-rehearsal-result-pending {
+  background: #fff6dc;
+  color: #b77908;
+}
+
+.pay-rehearsal-virtual-account {
+  width: 100%;
+  margin: 24px 0 0;
+  padding: 6px 16px;
+  border: 1px solid #e7e6ec;
+  border-radius: 14px;
+  background: #fafafc;
+}
+
+.pay-rehearsal-virtual-account div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ecebf0;
+  font-size: 12px;
+}
+
+.pay-rehearsal-virtual-account div:last-child {
+  border-bottom: 0;
+}
+
+.pay-rehearsal-virtual-account dt {
+  color: #858590;
+}
+
+.pay-rehearsal-virtual-account dd {
+  margin: 0;
+  color: #292930;
+  font-weight: 750;
+  text-align: right;
+}
+
+.pay-rehearsal-payment-id {
+  max-width: 100%;
+  overflow: hidden;
+  margin-top: 18px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f5f5f7;
+  color: #696974;
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.pay-rehearsal-result-actions {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.pay-rehearsal-footer {
+  padding: 13px 24px 17px;
+  border-top: 1px solid #f0f0f3;
+  color: #a0a0aa;
+  font-size: 10px;
+  text-align: center;
+}
+
+.pay-rehearsal-footer strong {
+  color: #797983;
+}
+
+.pay-rehearsal-close:focus-visible,
+.pay-rehearsal-primary:focus-visible,
+.pay-rehearsal-secondary:focus-visible,
+.pay-rehearsal-agreement input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pay-rehearsal-accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes pay-rehearsal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pay-rehearsal-rise-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pay-rehearsal-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 520px) {
+  .pay-rehearsal-root {
+    align-items: end;
+    padding: 0;
+  }
+
+  .pay-rehearsal-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    border-radius: 24px 24px 0 0;
+  }
+
+  .pay-rehearsal-header {
+    padding-top: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pay-rehearsal-backdrop,
+  .pay-rehearsal-dialog,
+  .pay-rehearsal-spinner {
+    animation-duration: 1ms;
+  }
+}

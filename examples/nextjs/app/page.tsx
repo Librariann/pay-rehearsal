@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  MockPaymentProvider,
-  usePayment,
-} from "pay-rehearsal";
+import { MockPaymentProvider, usePayment } from "pay-rehearsal";
 
 function CheckoutCard() {
   const { requestPayment, isOpen } = usePayment();
@@ -21,10 +18,14 @@ function CheckoutCard() {
   return (
     <section className="checkout-card">
       <span className="chip">개발용 결제 환경</span>
-      <h1>PG 승인 전에도<br />결제 흐름은 완성하세요.</h1>
+      <h1>
+        PG 승인 전에도
+        <br />
+        결제 흐름은 완성하세요.
+      </h1>
       <p>
-        실제 카드정보나 청구 없이 주문, 결제수단 선택, 로딩과 결과 처리를
-        미리 개발할 수 있습니다.
+        실제 카드정보나 청구 없이 주문, 결제수단 선택, 로딩과 결과 처리를 미리
+        개발할 수 있습니다.
       </p>
 
       <div className="product">
@@ -38,7 +39,6 @@ function CheckoutCard() {
       <button className="checkout-button" disabled={isOpen} onClick={checkout}>
         테스트 결제창 열기
       </button>
-
     </section>
   );
 }
@@ -48,8 +48,8 @@ export default function Home() {
     <MockPaymentProvider
       result="success"
       delayMs={1_200}
-      paymentMethods={["card", "bank-transfer", "virtual-account"]}
-      defaultPaymentMethod="card"
+      paymentMethods={["paypal"]}
+      defaultPaymentMethod="paypal"
       theme={{ accentColor: "#5b4df5" }}
     >
       <main>

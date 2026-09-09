@@ -59,7 +59,7 @@ describe("createMockPaymentAdapter", () => {
     await expect(payment).rejects.toMatchObject({ name: "AbortError" });
   });
 
-  it("개별 결제 매개변수로 Provider의 기본 결과를 덮어쓴다", async () => {
+  it("개별 결제 매개변수로 어댑터의 기본 결과를 덮어쓴다", async () => {
     const adapter = createMockPaymentAdapter({ result: "failure", delayMs: 0 });
     const result = await adapter.pay(
       { ...attempt, options: { mockResult: "success" } },

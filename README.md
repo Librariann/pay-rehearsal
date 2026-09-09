@@ -1,192 +1,238 @@
 # Pay Rehearsal React
 
-[한국어](https://github.com/Librariann/pay-rehearsal/blob/main/README.ko.md)
+[한국어](https://github.com/Librariann/pay-rehearsal/blob/main/README.kr.md)
 
-A TypeScript Mock checkout UI SDK for React and Next.js that lets you build domestic payment gateway and PayPal-style payment flows before connecting a live payment provider.
+A TypeScript Mock checkout UI SDK for React and Next.js. Open a realistic checkout by calling one function—no Provider, hook, credentials, or separate CSS import required.
 
-> The Mock adapter does not perform real authorizations, charges, or card-data collection. For production, replace the simulated authentication UI with the payment provider's official checkout experience and verify every payment on your server.
+> Pay Rehearsal does not authorize payments, charge customers, or collect real card data. Replace the rehearsal flow with the payment provider's official SDK and server-side verification before production.
 
 ## Features
 
-- Responsive payment modal with baseline accessibility support
-- UI flows for cards, bank transfers, virtual accounts, mobile payments, and PayPal
-- Card issuer selection for KB Kookmin, Shinhan, Samsung, Hyundai, Lotte, Hana, Woori, NH Nonghyup, and BC
-- One-time and installment payment selection with card issuer authentication simulation
-- Major bank selection with bank transfer authentication simulation
-- Virtual account details with a deposit-pending (`pending`) result
-- A PayPal-inspired checkout theme with order creation, buyer approval, and capture stages
-- Success, failure, cancellation, and random test scenarios
-- Promise-based `requestPayment()` API
-- Prebuilt `PaymentButton`
-- A replaceable `PaymentAdapter` interface for custom test and integration experiments
-- Theme configuration for color, border radius, and font family
-- Compatible with React 18/19 and the Next.js App Router
+- One-call `requestPayment()` API with automatic modal mounting and cleanup
+- No React Provider or separate stylesheet import
+- Card, bank transfer, virtual account, mobile payment, and PayPal-style flows
+- Success, failure, cancellation, pending, and random scenarios
+- Card issuer, installment, and bank selection
+- PayPal-inspired order creation, buyer approval, and capture stages
+- Focus trap, Escape-to-close, scroll lock, and focus restoration
+- Promise-based typed results
+- Custom themes and payment-method ordering
+- React 18/19 and Next.js App Router support
 
 ## Installation
-
-Install the package from npm:
 
 ```bash
 npm install pay-rehearsal
 ```
 
-The package injects its styles automatically when imported. You do not need to import a separate CSS file.
+Importing the package injects its styles automatically.
 
-To install a local checkout in another project, build it first and install its directory:
+## React
 
-```bash
-npm install
-npm run build
-npm install /absolute/path/to/pay-rehearsal
-```
-
-## Using It with the Next.js App Router
-
-Create a client-side provider.
+Call `requestPayment()` from a browser event handler. The library mounts the checkout modal when needed and removes it after completion.
 
 ```tsx
-// app/payment-provider.tsx
-"use client";
-
-import { MockPaymentProvider } from "pay-rehearsal";
-import type { ReactNode } from "react";
-
-export function AppPaymentProvider({ children }: { children: ReactNode }) {
-  return (
-    <MockPaymentProvider
-      result="success"
-      delayMs={900}
-      paymentMethods={["card", "bank-transfer", "virtual-account", "paypal"]}
-      defaultPaymentMethod="card"
-      theme={{ accentColor: "#4f46e5", borderRadius: 24 }}
-    >
-      {children}
-    </MockPaymentProvider>
-  );
-}
-```
-
-Add the provider to your root layout.
-
-```tsx
-// app/layout.tsx
-import { AppPaymentProvider } from "./payment-provider";
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        <AppPaymentProvider>{children}</AppPaymentProvider>
-      </body>
-    </html>
-  );
-}
-```
-
-Call the API from any client component that needs to initiate a payment.
-
-```tsx
-"use client";
-
-import { usePayment } from "pay-rehearsal";
+import { useState } from "react";
+import { requestPayment, type PaymentResult } from "pay-rehearsal";
 
 export function CheckoutButton() {
-  const { requestPayment, isOpen } = usePayment();
+  const [isOpen, setIsOpen] = useState(false);
+  const [result, setResult] = useState<PaymentResult | null>(null);
 
   const checkout = async () => {
-    const result = await requestPayment({
-      orderId: `ORDER-${Date.now()}`,
-      orderName: "Pro Plan — 1 Month",
-      amount: 29_000,
-      currency: "KRW",
-      customer: { email: "developer@example.com" },
-    });
-
-    if (result.status === "success") {
-      console.log(result.paymentId, result.testMode);
-    }
-
-    if (result.status === "pending") {
-      // Issuing a virtual account does not complete the payment.
-      console.log(result.virtualAccount);
+    try {
+      setIsOpen(true);
+      setResult(
+        await requestPayment(
+          {
+            orderId: `ORDER-${Date.now()}`,
+            orderName: "Pro Plan — 1 Month",
+            amount: 29_000,
+            currency: "KRW",
+            customer: { email: "developer@example.com" },
+          },
+          {
+            result: "success",
+            paymentMethods: ["card", "virtual-account", "paypal"],
+            theme: { accentColor: "#4f46e5", borderRadius: 24 },
+          },
+        ),
+      );
+    } finally {
+      setIsOpen(false);
     }
   };
 
   return (
-    <button type="button" disabled={isOpen} onClick={checkout}>
-      Pay now
-    </button>
+    <>
+      <button type="button" disabled={isOpen} onClick={checkout}>
+        Pay now
+      </button>
+      {result && <output>{result.status}</output>}
+    </>
   );
 }
 ```
 
-For simpler use cases, you can use `PaymentButton`.
+Run the complete Vite example:
 
-```tsx
-<PaymentButton
-  request={{
-    orderId: "ORDER-1001",
-    orderName: "Pro Plan",
-    amount: 29_000,
-  }}
-  onResult={(result) => console.log(result)}
->
-  Pay KRW 29,000
-</PaymentButton>
+```bash
+cd examples/react
+npm install
+npm run dev
 ```
 
-## Configuring Payment Methods and Their Order
+## Next.js App Router
 
-Use the provider's `paymentMethods` property to choose which methods appear in the modal and in what order. When omitted, cards, bank transfers, virtual accounts, mobile payments, and PayPal are all displayed.
+`requestPayment()` is browser-only. Call it from a Client Component; no root-layout Provider is needed.
 
 ```tsx
-<MockPaymentProvider
-  paymentMethods={["virtual-account", "card"]}
-  defaultPaymentMethod="virtual-account"
->
-  {children}
-</MockPaymentProvider>
+// app/checkout-button.tsx
+"use client";
+
+import { requestPayment } from "pay-rehearsal";
+
+export function CheckoutButton() {
+  const checkout = async () => {
+    const result = await requestPayment(
+      {
+        orderId: `ORDER-${Date.now()}`,
+        orderName: "Global Pro Plan",
+        amount: 29,
+        currency: "USD",
+      },
+      {
+        result: "success",
+        paymentMethod: "paypal",
+      },
+    );
+
+    if (result.status === "success") {
+      console.log(result.paymentId, result.approvedAt);
+    }
+  };
+
+  return <button onClick={checkout}>Open test checkout</button>;
+}
 ```
 
-To override the list for a single payment, pass options as the second argument to `requestPayment`.
+Run the complete Next.js example:
+
+```bash
+cd examples/nextjs
+npm install
+npm run dev
+```
+
+## Request API
 
 ```ts
-requestPayment(order, {
-  paymentMethods: ["card", "bank-transfer"],
+const result = await requestPayment(payment, options);
+```
+
+### Payment request
+
+```ts
+const payment = {
+  orderId: "ORDER-1001",
+  orderName: "Pro Plan",
+  amount: 29_000,
+  currency: "KRW",
+  customer: {
+    id: "USER-42",
+    name: "Jane Doe",
+    email: "jane@example.com",
+  },
+  metadata: { planId: "pro-monthly" },
+};
+```
+
+Supported currencies are `KRW`, `USD`, `JPY`, and `EUR`.
+
+### Options
+
+```ts
+requestPayment(payment, {
+  result: "failure",
+  delayMs: 1_200,
+  failureCode: "CARD_DECLINED",
+  failureMessage: "The card authorization was declined.",
+  paymentMethods: ["card", "bank-transfer", "virtual-account", "paypal"],
+  defaultPaymentMethod: "card",
+  theme: {
+    accentColor: "#4f46e5",
+    borderRadius: 24,
+    fontFamily: "Inter, sans-serif",
+  },
 });
 ```
 
-To lock a payment to one method, use `paymentMethod`. The method selection UI is skipped and the modal starts at that method's detail step.
+| Option | Description |
+| --- | --- |
+| `result` | `success`, `failure`, `cancelled`, or `random` |
+| `delayMs` | Simulated adapter delay |
+| `paymentMethods` | Visible methods in display order |
+| `defaultPaymentMethod` | Initially selected visible method |
+| `paymentMethod` | Locks the checkout to one method and skips method selection |
+| `randomSuccessRate` | Success probability when `result` is `random` |
+| `virtualAccountHolder` | Mock virtual-account holder |
+| `virtualAccountDueHours` | Mock deposit deadline in hours |
+| `theme` | Accent color, radius, and font |
+| `adapter` | Optional custom `PaymentAdapter` |
+
+Only one checkout can be active at a time. A second call rejects until the current checkout completes.
+
+## Results
+
+`requestPayment()` resolves to a discriminated `PaymentResult` union.
 
 ```ts
-requestPayment(order, {
-  paymentMethod: "card",
+const result = await requestPayment(payment);
+
+switch (result.status) {
+  case "success":
+    console.log(result.paymentId, result.approvedAt);
+    break;
+  case "pending":
+    console.log(result.virtualAccount, result.pendingReason);
+    break;
+  case "failed":
+    console.log(result.code, result.message, result.retryable);
+    break;
+  case "cancelled":
+    console.log(result.reason);
+    break;
+}
+```
+
+Every result includes `orderId`, `amount`, `method`, and `testMode`. Method-specific fields such as `cardIssuer`, `installmentMonths`, and `bank` are included when selected.
+
+Note that the configured scenario is named `failure`, while the returned status is `failed`.
+
+## Sending Results to Your Backend
+
+Send the request and result as JSON to your normal backend API. The example intentionally does not depend on a database or ORM.
+
+```ts
+const result = await requestPayment(payment, { result: "success" });
+
+await fetch("/api/payments", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ payment, result }),
 });
 ```
 
-Configuration precedence is request-level `paymentMethod` → request-level `paymentMethods` → provider-level `paymentMethods`. Array order determines display order. In production, your server must verify that a selected payment method is enabled under your gateway contract regardless of whether the method appears in the UI.
+Keep test records visibly separated with `testMode: true`. `PaymentResult` does not repeat `orderName`, `currency`, `customer`, or `metadata`, so persist the original request alongside the result when those values are needed.
 
-## Rehearsing PayPal Checkout
+Never trust this browser result in production. A production server must verify the order ID, amount, currency, authorization status, and webhook signature with the real payment provider.
 
-Add `paypal` to the provider's payment method list:
+## PayPal Rehearsal
 
-```tsx
-<MockPaymentProvider
-  paymentMethods={["paypal", "card"]}
-  defaultPaymentMethod="paypal"
->
-  {children}
-</MockPaymentProvider>
-```
-
-You can also lock an individual request to PayPal:
+Lock a request to PayPal:
 
 ```ts
-requestPayment(
+const result = await requestPayment(
   {
     orderId: "ORDER-PAYPAL-1001",
     orderName: "Global Pro Plan",
@@ -197,161 +243,52 @@ requestPayment(
 );
 ```
 
-When PayPal is active, the modal automatically switches to a PayPal-inspired navy and yellow theme. It returns to the configured provider theme when another payment method is selected.
+The modal simulates these stages:
 
-The Mock PayPal flow reproduces these stages:
+1. Create a Mock PayPal order.
+2. Simulate buyer approval.
+3. Simulate capture and verification.
+4. Resolve with the configured result.
 
-1. **Create order** — displays a short server-order creation state and generates a `PAYPAL-MOCK-*` order ID.
-2. **Buyer approval** — displays the simulated PayPal login and approval step.
-3. **Capture payment** — uses the configured Mock adapter to process the approved order.
-4. **Show result** — returns `success`, `failed`, or `cancelled` according to the selected test scenario.
+No PayPal SDK is loaded and no credentials or real funds are involved. In production, create and capture PayPal orders on your server and verify the final capture status there.
 
-```text
-Select PayPal
-  → Create a Mock order
-  → Simulate buyer approval
-  → Capture and verify
-  → Return the payment result
-```
+## PaymentButton
 
-The progress indicator and Mock order ID are UI simulation data. The final `PaymentResult` continues to use the adapter-generated `paymentId`.
-
-This package does not load the PayPal JavaScript SDK, open a real PayPal window, create a PayPal order, capture funds, or require PayPal credentials. For a live integration, your server must create the order and capture it after buyer approval. Validate supported currencies, buyer country availability, amount, merchant account, and the final capture status on your server.
-
-## Test Scenarios
+The optional `PaymentButton` component also works without a Provider.
 
 ```tsx
-<MockPaymentProvider result="success">...</MockPaymentProvider>
-<MockPaymentProvider result="failure">...</MockPaymentProvider>
-<MockPaymentProvider result="cancelled">...</MockPaymentProvider>
-<MockPaymentProvider result="random" randomSuccessRate={0.7}>...</MockPaymentProvider>
-```
+import { PaymentButton } from "pay-rehearsal";
 
-You can also configure the failure code, failure message, and simulated delay.
-
-```ts
-createMockPaymentAdapter({
-  result: "failure",
-  delayMs: 1_500,
-  failureCode: "CARD_DECLINED",
-  failureMessage: "The card authorization was declined.",
-});
-```
-
-The account holder and deposit deadline for virtual accounts are configurable as well.
-
-```tsx
-<MockPaymentProvider
-  result="success"
-  virtualAccountHolder="Test Merchant"
-  virtualAccountDueHours={24}
->
-  {children}
-</MockPaymentProvider>
-```
-
-To test a different outcome for a single payment, pass options as the second argument to `requestPayment`. This value takes precedence over the provider's default `result`.
-
-```ts
-const result = await requestPayment(
-  {
-    orderId: "ORDER-FAILURE-TEST",
-    orderName: "Failure Screen Test",
+<PaymentButton
+  request={{
+    orderId: "ORDER-1001",
+    orderName: "Pro Plan",
     amount: 29_000,
-  },
-  { mockResult: "failure" },
-);
+  }}
+  options={{ result: "success" }}
+  onResult={(result) => console.log(result)}
+>
+  Pay KRW 29,000
+</PaymentButton>;
 ```
 
-## Test Flow by Payment Method
+## Production Boundary
 
-- Credit or debit card: select issuer → select one-time or installment payment → simulate issuer authentication → confirm authorization → `success`
-- Bank transfer: select withdrawal bank → simulate bank app or BankPay authentication → confirm transfer → `success`
-- Virtual account: select deposit bank → issue account → display account number and deposit deadline → `pending`
-- Mobile payment: simulate authorization → `success`
-- PayPal: simulate server-side order creation → simulate buyer approval → simulate capture and verification → `success`
-
-A real virtual account payment is not complete when the account is issued. The order should be marked as paid only after your server verifies the payment gateway's webhook following the deposit. `pay-rehearsal` reproduces this distinction by returning `pending` when a virtual account is issued.
-
-## Custom Adapters and Production Boundaries
-
-The adapter interface can be used as a starting point for connecting a payment gateway. The included modal remains a rehearsal UI; a production integration must replace simulated authentication with the provider's official checkout experience and verify the result on the server.
-
-```ts
-import type { PaymentAdapter } from "pay-rehearsal";
-
-export const realPgAdapter: PaymentAdapter = {
-  name: "My Payment Gateway",
-  testMode: false,
-
-  async pay({ request, method, cardIssuer, installmentMonths, bank }, signal) {
-    // 1. Open the payment gateway SDK checkout UI.
-    // 2. Send paymentKey, orderId, and amount to your application server.
-    // 3. Have the server call the gateway's confirmation API and verify the amount.
-    // 4. Return only the server-verified result.
-    const response = await fetch("/api/payments/confirm", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        request,
-        method,
-        cardIssuer,
-        installmentMonths,
-        bank,
-      }),
-      signal,
-    });
-
-    if (!response.ok) {
-      return {
-        status: "failed",
-        orderId: request.orderId,
-        amount: request.amount,
-        method,
-        cardIssuer,
-        installmentMonths,
-        bank,
-        testMode: false,
-        code: "PG_CONFIRM_FAILED",
-        message: "Payment authorization failed.",
-        retryable: false,
-      };
-    }
-
-    const data = await response.json();
-    return {
-      status: "success",
-      orderId: request.orderId,
-      amount: request.amount,
-      method,
-      cardIssuer,
-      installmentMonths,
-      bank,
-      testMode: false,
-      paymentId: data.paymentId,
-      approvedAt: data.approvedAt,
-    };
-  },
-};
-```
-
-Follow these rules before switching to production:
-
-- Never collect or store card numbers, passwords, or government-issued identification numbers in this UI.
-- Verify the order amount and authorization status on your application server, not from browser results.
+- Do not collect or store card numbers, passwords, or identity numbers in this UI.
 - Use a unique, server-generated `orderId`.
-- Apply idempotency to your server-side authorization endpoint to prevent duplicate charges.
-- Confirm that the Mock adapter is not connected in production builds.
+- Verify the expected amount and final authorization status on your server.
+- Apply idempotency to confirmation endpoints to prevent duplicate charges.
+- Replace simulated authentication with the provider's official checkout experience.
+- Ensure Mock results cannot update production orders.
 
-## Commands
+## Development
 
 ```bash
+npm install
 npm run typecheck
 npm test
 npm run build
 ```
-
-A working Next.js example is available in `examples/nextjs`.
 
 ## Disclaimer
 

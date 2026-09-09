@@ -130,10 +130,18 @@ export interface PaymentTheme {
   fontFamily?: string;
 }
 
-export interface PaymentContextValue {
-  requestPayment(
-    request: PaymentRequest,
-    options?: PaymentRequestOptions,
-  ): Promise<PaymentResult>;
-  isOpen: boolean;
+export interface RequestPaymentOptions extends PaymentRequestOptions {
+  /** Default Mock outcome for this payment. */
+  result?: MockPaymentScenario;
+  delayMs?: number;
+  failureCode?: string;
+  failureMessage?: string;
+  randomSuccessRate?: number;
+  virtualAccountDueHours?: number;
+  virtualAccountHolder?: string;
+  /** Payment method selected when the checkout modal first opens. */
+  defaultPaymentMethod?: PaymentMethod;
+  theme?: PaymentTheme;
+  /** Uses a custom adapter instead of the built-in Mock adapter. */
+  adapter?: PaymentAdapter;
 }

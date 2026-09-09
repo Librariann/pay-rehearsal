@@ -1,18 +1,18 @@
 "use client";
 
-import type { ButtonHTMLAttributes, MouseEvent } from "react";
+import { useState, type ButtonHTMLAttributes, type MouseEvent } from "react";
 
 import type {
   PaymentRequest,
-  PaymentRequestOptions,
   PaymentResult,
+  RequestPaymentOptions,
 } from "../types";
-import { usePayment } from "./usePayment";
+import { requestPayment } from "../requestPayment";
 
 export interface PaymentButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "onError"> {
   request: PaymentRequest;
-  options?: PaymentRequestOptions;
+  options?: RequestPaymentOptions;
   onResult?(result: PaymentResult): void;
   onError?(error: Error): void;
 }
@@ -26,17 +26,20 @@ export function PaymentButton({
   children = "결제하기",
   ...buttonProps
 }: PaymentButtonProps) {
-  const { requestPayment, isOpen } = usePayment();
+  const [isOpen, setIsOpen] = useState(false);
 
   const onClick = async (event: MouseEvent<HTMLButtonElement>) => {
     if (event.defaultPrevented) return;
 
     try {
+      setIsOpen(true);
       onResult?.(await requestPayment(request, options));
     } catch (error) {
       onError?.(
         error instanceof Error ? error : new Error("결제창을 열지 못했습니다."),
       );
+    } finally {
+      setIsOpen(false);
     }
   };
 

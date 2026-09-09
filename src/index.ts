@@ -2,13 +2,9 @@ import "./styles.css";
 
 export { createMockPaymentAdapter } from "./adapters/mock";
 export type { MockPaymentAdapterOptions } from "./adapters/mock";
-export { MockPaymentProvider } from "./components/MockPaymentProvider";
-export type { MockPaymentProviderProps } from "./components/MockPaymentProvider";
 export { PaymentButton } from "./components/PaymentButton";
 export type { PaymentButtonProps } from "./components/PaymentButton";
-export { PaymentProvider } from "./components/PaymentProvider";
-export type { PaymentProviderProps } from "./components/PaymentProvider";
-export { usePayment } from "./components/usePayment";
+export { requestPayment } from "./requestPayment";
 export type {
   Currency,
   CardIssuer,
@@ -17,7 +13,6 @@ export type {
   PaymentAdapter,
   PaymentAttempt,
   PaymentCancelled,
-  PaymentContextValue,
   PaymentCustomer,
   PaymentFailure,
   PaymentMethod,
@@ -27,5 +22,6 @@ export type {
   PaymentResult,
   PaymentSuccess,
   PaymentTheme,
+  RequestPaymentOptions,
   VirtualAccountInfo,
 } from "./types";
